@@ -2,7 +2,7 @@
 
 A Telegram bot that converts YouTube videos to MP3 audio files and sends them directly to users — all within a few seconds.
 
-![Bot Demo](https://imgur.com/a/MCUxDIm) <!-- Example screenshot placeholder -->
+![Bot Demo](https://i.imgur.com/Gag6eFw.jpeg) <!-- Example screenshot placeholder -->
 
 ---
 
