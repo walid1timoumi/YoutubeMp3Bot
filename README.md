@@ -1,120 +1,142 @@
-# YouTube to MP3 Telegram Bot
+# 🎧 YouTube to MP3 Telegram Bot
 
-A Telegram bot that converts YouTube videos to MP3 audio files and sends them directly to users.
+A Telegram bot that converts YouTube videos to MP3 audio files and sends them directly to users — all within a few seconds.
 
-![Bot Demo](https://i.imgur.com/JK7ZENP.png) *(example screenshot placeholder)*
+![Bot Demo](https://imgur.com/a/MCUxDIm) <!-- Example screenshot placeholder -->
 
-## Features
+---
+
+## 🚀 Features
 
 - 🎵 Convert YouTube videos to high-quality MP3 (192kbps)
-- 🔗 Supports both `youtube.com` and `youtu.be` URLs
-- 🧹 Automatically cleans URLs (removes playlist parameters, timestamps, etc.)
-- 📦 Handles files up to Telegram's 50MB limit
+- 🔗 Supports both `youtube.com` and `youtu.be` links
+- 🧹 Cleans URLs by removing unnecessary parameters
+- 📦 Handles files up to Telegram’s 50MB limit
 - ⚡ Fast conversion using `yt-dlp` and `FFmpeg`
-- 💾 Automatic cleanup of temporary files
+- 🧼 Auto-cleans temp files after each download
 
-## Requirements
+---
+
+## 📦 Requirements
 
 - Python 3.8+
-- Telegram Bot Token (from [@BotFather](https://t.me/BotFather))
-- `ffmpeg` (included in the project)
-- Render.com account (for deployment)
+- Telegram Bot Token from [@BotFather](https://t.me/BotFather)
+- FFmpeg (included in project or system-installed)
+- [Render.com](https://render.com) account for deployment (optional)
 
-## Installation
+---
 
-### Local Development
+## 🧑‍💻 Local Development Setup
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/youtube-mp3-bot.git
-   cd youtube-mp3-bot
-Install dependencies:
+### 1. Clone the Repository
 
-bash
-Copy
+```bash
+git clone https://github.com/yourusername/youtube-mp3-bot.git
+cd youtube-mp3-bot
+```
+
+### 2. Install Dependencies
+
+```bash
 pip install -r requirements.txt
-Set up environment variables:
+```
 
-bash
-Copy
+### 3. Set Up Environment Variables
+
+```bash
 echo "TELEGRAM_TOKEN=your_bot_token_here" > .env
-Run the bot:
+```
 
-bash
-Copy
+### 4. Run the Bot
+
+```bash
 python bot.py
-Render Deployment
-Create a new Web Service on Render
+```
 
-Set environment variables:
+---
 
-TELEGRAM_TOKEN: Your Telegram bot token
+## 🌐 Deployment on Render
 
-Use the following build commands:
+1. Create a new **Web Service** on [Render](https://render.com/).
+2. Set the environment variable:
 
-bash
-Copy
-# Build Command
+   - `TELEGRAM_TOKEN`: Your Telegram bot token
+
+3. Use this **build command**:
+
+```bash
 unzip ffmpeg.zip -d ffmpeg
 pip install -r requirements.txt
-Set the start command:
+```
 
-bash
-Copy
+4. Set the **start command**:
+
+```bash
 python bot.py
-Usage
-Start a chat with your bot on Telegram
+```
 
-Send any YouTube URL (e.g., https://youtube.com/watch?v=dQw4w9WgXcQ)
+---
 
-The bot will:
+## 💡 Usage
 
-Download the video
+1. Start a conversation with your bot on Telegram.
+2. Send any valid YouTube link (e.g. `https://youtube.com/watch?v=dQw4w9WgXcQ`).
+3. The bot will:
+   - ⬇️ Download the video
+   - 🔄 Convert to MP3
+   - 📤 Send the MP3 audio back to you
 
-Convert to MP3
+### Available Commands
 
-Send the audio file back to you
+- `/start` – Show welcome message
 
-Commands:
+---
 
-/start - Show welcome message
+## ⚙️ Configuration
 
-Configuration
-Environment variables:
+| Variable        | Description                       |
+|----------------|-----------------------------------|
+| `TELEGRAM_TOKEN` | ✅ Required. Your bot token from BotFather |
+| `FFMPEG_PATH`    | Optional. Path to FFmpeg binaries (default included) |
 
-TELEGRAM_TOKEN (required) - Your Telegram bot token
+---
 
-FFMPEG_PATH - Path to FFmpeg binaries (default included)
+## 🔍 Technical Details
 
-Technical Details
-Uses yt-dlp for YouTube downloading (superior to youtube-dl)
+- Uses `yt-dlp` for YouTube downloads (better than `youtube-dl`)
+- Uses `FFmpeg` for audio extraction
+- Auto-sanitizes filenames to prevent OS issues
+- Prevents sending files over 50MB
+- Handles logging and exceptions gracefully
 
-FFmpeg for audio conversion (pre-configured for Render)
+---
 
-Automatic filename sanitization
+## ⚠️ Limitations
 
-Error handling and logging
+- Telegram bots cannot send files larger than **50MB**
+- YouTube may restrict some videos due to region or copyright
+- Download time depends on video length and server performance
 
-File size checking (won't attempt to send >50MB files)
+---
 
-Limitations
-Telegram has a 50MB file size limit
+## 🤝 Contributing
 
-Some videos may be blocked by YouTube
+Pull requests are welcome! Before submitting:
 
-Processing time depends on video length and server resources
+- Follow PEP8 style conventions
+- Test your code
+- Update documentation if needed
 
-Contributing
-Pull requests are welcome! Please ensure:
+---
 
-Your code follows PEP8 style
+## 📄 License
 
-You've tested your changes
+This project is licensed under the **MIT License**. See [`LICENSE`](LICENSE) for details.
 
-You've updated documentation as needed
+---
 
-License
-MIT License - See LICENSE file
+## 🛟 Support
 
-Support
-For issues, please open a GitHub issue
+For issues or feature requests, please [open a GitHub issue](https://github.com/yourusername/youtube-mp3-bot/issues).
+
+---
