@@ -8,7 +8,7 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, CommandHandler, filters, ContextTypes
 import yt_dlp
 
-# ✅ FFmpeg path on your system
+# ✅ FFmpeg path on your system (adjust if on Render)
 FFMPEG_PATH = r"D:\ffmpeg-2025-03-27-git-114fccc4a5-full_build\ffmpeg-2025-03-27-git-114fccc4a5-full_build\bin"
 
 # 🚫 Telegram file size limit for audio
@@ -20,7 +20,7 @@ logging.basicConfig(
     level=logging.INFO
 )
 
-# ✅ Strip unnecessary parameters (playlist, start_radio, etc.)
+# ✅ Strip unnecessary query params
 def clean_youtube_url(url: str) -> str:
     if "youtube.com" not in url:
         return url
@@ -44,9 +44,17 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text("⏳ Downloading and converting to MP3...")
 
+    filename = None  # <== Declare in advance for safety
+
     try:
-        # Step 1: Extract video info
-        with yt_dlp.YoutubeDL({'quiet': True, 'ffmpeg_location': FFMPEG_PATH}) as ydl:
+        # Step 1: Set yt-dlp options for extraction
+        extract_opts = {
+            'quiet': True,
+            'ffmpeg_location': FFMPEG_PATH,
+            'cookiefile': 'cookies.txt'
+        }
+
+        with yt_dlp.YoutubeDL(extract_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             video_title = info.get("title", "audio")
 
@@ -55,22 +63,21 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         filename_base = safe_title
         filename = f"{filename_base}.mp3"
 
-        # Step 3: yt-dlp options
+        # Step 3: yt-dlp options for download
         ydl_opts = {
-    'format': 'bestaudio/best',
-    'outtmpl': filename_base,
-    'ffmpeg_location': FFMPEG_PATH,
-    'noplaylist': True,
-    'cookiefile': 'cookies.txt',   # <-- Add this line
-    'postprocessors': [{
-        'key': 'FFmpegExtractAudio',
-        'preferredcodec': 'mp3',
-        'preferredquality': '192',
-    }],
-    'quiet': False,
-    'verbose': True
-}
-
+            'format': 'bestaudio/best',
+            'outtmpl': filename_base,
+            'ffmpeg_location': FFMPEG_PATH,
+            'cookiefile': 'cookies.txt',
+            'noplaylist': True,
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192',
+            }],
+            'quiet': False,
+            'verbose': True
+        }
 
         print(f"[yt-dlp] Downloading: {url}")
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -88,9 +95,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"❌ MP3 is too large to send via Telegram ({size / 1024 / 1024:.2f} MB)."
             )
         else:
-            # Show uploading status
             await update.message.chat.send_action(action="upload_audio")
-
             with open(filename, 'rb') as audio:
                 await update.message.reply_audio(audio, title=video_title)
 
@@ -101,7 +106,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"❌ Error during processing:\n{e}\n\nURL: {url}")
 
     finally:
-        if os.path.exists(filename):
+        if filename and os.path.exists(filename):
             os.remove(filename)
 
 # 🚀 Start the bot
