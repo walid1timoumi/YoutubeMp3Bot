@@ -9,7 +9,8 @@ from telegram.ext import ApplicationBuilder, MessageHandler, CommandHandler, fil
 import yt_dlp
 
 # ✅ FFmpeg path on your system (adjust if on Render)
-FFMPEG_PATH = r"D:\ffmpeg-2025-03-27-git-114fccc4a5-full_build\ffmpeg-2025-03-27-git-114fccc4a5-full_build\bin"
+FFMPEG_PATH = "ffmpeg/ffmpeg-6.1-essentials_build/bin"
+
 
 # 🚫 Telegram file size limit for audio
 MAX_TELEGRAM_FILE_SIZE = 49 * 1024 * 1024  # 49MB
