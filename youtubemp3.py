@@ -57,18 +57,20 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # Step 3: yt-dlp options
         ydl_opts = {
-            'format': 'bestaudio/best',
-            'outtmpl': filename_base,
-            'ffmpeg_location': FFMPEG_PATH,
-            'noplaylist': True,
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': '192',
-            }],
-            'quiet': False,
-            'verbose': True
-        }
+    'format': 'bestaudio/best',
+    'outtmpl': filename_base,
+    'ffmpeg_location': FFMPEG_PATH,
+    'noplaylist': True,
+    'cookiefile': 'cookies.txt',   # <-- Add this line
+    'postprocessors': [{
+        'key': 'FFmpegExtractAudio',
+        'preferredcodec': 'mp3',
+        'preferredquality': '192',
+    }],
+    'quiet': False,
+    'verbose': True
+}
+
 
         print(f"[yt-dlp] Downloading: {url}")
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
