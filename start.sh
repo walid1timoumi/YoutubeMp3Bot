@@ -1,14 +1,12 @@
 #!/bin/bash
-echo "🔍 FFmpeg path:"
-which ffmpeg
 
-echo "📦 FFmpeg version:"
+echo "🔍 Verifying FFmpeg..."
+which ffmpeg
 ffmpeg -version
 
-echo "🔁 Stopping any existing Python Telegram bot instances..."
+echo "✅ Starting your Telegram bot..."
 
-# Kill any existing Python scripts (non-fatal if not found)
-pkill -f youtubemp3.py || echo "✅ No previous bot process found."
+# Optional: kill any stuck Python processes (advanced safety, use with care)
+# pkill -f youtubemp3.py || true
 
-echo "🚀 Starting Telegram bot..."
-python3 youtubemp3.py
+python youtubemp3.py
