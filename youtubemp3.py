@@ -52,7 +52,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         extract_opts = {
             'quiet': True,
             'ffmpeg_location': FFMPEG_PATH,
-            'cookiefile': 'cookies.txt'
+            'cookiefile': os.path.join(os.path.dirname(__file__), 'cookies.txt'),
         }
 
         with yt_dlp.YoutubeDL(extract_opts) as ydl:
