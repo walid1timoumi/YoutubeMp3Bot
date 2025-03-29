@@ -26,11 +26,11 @@ logging.basicConfig(
 # ✅ Clean up YouTube URLs
 def clean_youtube_url(url: str) -> str:
     if "youtube.com" not in url:
-        return url
-    parsed = urlparse(url)
-    qs = parse_qs(parsed.query)
-    video_id = qs.get("v", [None])[0]
-    return f"https://www.youtube.com/watch?v={video_id}" if video_id else url
+        parsed = urlparse(url)
+        qs = parse_qs(parsed.query)
+        video_id = qs.get("v", [None])[0]
+        return f"https://www.youtube.com/watch?v={video_id}" if video_id else url
+    return url
 
 # 👋 Start command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -47,12 +47,20 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text("⏳ Downloading and converting to MP3...")
 
-    filename = None  # safe init
+    filename = None  # Initialize for cleanup
 
+    # ✅ Confirm cookies file is available and readable
     try:
         print(f"[DEBUG] Cookie file path: {cookie_path}")
         print(f"[DEBUG] Cookie file exists: {os.path.exists(cookie_path)}")
 
+        with open(cookie_path, "r") as f:
+            preview = f.read(300)
+            print("[DEBUG] Cookie preview:\n", preview)
+    except Exception as e:
+        print(f"[DEBUG] Failed to read cookie file: {e}")
+
+    try:
         # Step 1: Extract info
         extract_opts = {
             'quiet': True,
@@ -61,15 +69,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         }
 
         with yt_dlp.YoutubeDL(extract_opts) as ydl:
-            print("[DEBUG] Starting cookie test...")
-with open(cookie_path, "r") as f:
-    content = f.read()
-    print("[DEBUG] Cookie content preview:\n", content[:300])
-
             info = ydl.extract_info(url, download=False)
             video_title = info.get("title", "audio")
 
-        # Step 2: Clean filename
+        # Step 2: Sanitize file name
         safe_title = re.sub(r'[\\/*?:"<>|]', "", video_title)
         filename_base = safe_title
         filename = f"{filename_base}.mp3"
@@ -94,6 +97,7 @@ with open(cookie_path, "r") as f:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
 
+        # ✅ Validate file exists
         if not os.path.exists(filename):
             await update.message.reply_text("❌ Failed to download or convert the video.")
             return
