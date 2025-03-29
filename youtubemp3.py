@@ -61,6 +61,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         }
 
         with yt_dlp.YoutubeDL(extract_opts) as ydl:
+            print("[DEBUG] Starting cookie test...")
+with open(cookie_path, "r") as f:
+    content = f.read()
+    print("[DEBUG] Cookie content preview:\n", content[:300])
+
             info = ydl.extract_info(url, download=False)
             video_title = info.get("title", "audio")
 
