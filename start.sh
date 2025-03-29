@@ -1,4 +1,9 @@
 #!/bin/bash
+echo "🔍 FFmpeg path:"
+which ffmpeg
+
+echo "📦 FFmpeg version:"
+ffmpeg -version
 
 echo "🔁 Stopping any existing Python Telegram bot instances..."
 
