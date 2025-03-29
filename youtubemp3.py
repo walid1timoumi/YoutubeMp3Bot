@@ -8,12 +8,14 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, CommandHandler, filters, ContextTypes
 import yt_dlp
 
-# ✅ FFmpeg path on your system (adjust if on Render)
+# ✅ FFmpeg path for Render (Linux)
 FFMPEG_PATH = "ffmpeg/ffmpeg-6.1-essentials_build/bin"
 
+# ✅ Telegram file size limit (max ~49MB)
+MAX_TELEGRAM_FILE_SIZE = 49 * 1024 * 1024
 
-# 🚫 Telegram file size limit for audio
-MAX_TELEGRAM_FILE_SIZE = 49 * 1024 * 1024  # 49MB
+# ✅ Get absolute path to cookies.txt
+cookie_path = os.path.join(os.path.dirname(__file__), 'cookies.txt')
 
 # 🪵 Logging setup
 logging.basicConfig(
@@ -21,7 +23,7 @@ logging.basicConfig(
     level=logging.INFO
 )
 
-# ✅ Strip unnecessary query params
+# ✅ Clean up YouTube URLs
 def clean_youtube_url(url: str) -> str:
     if "youtube.com" not in url:
         return url
@@ -30,7 +32,7 @@ def clean_youtube_url(url: str) -> str:
     video_id = qs.get("v", [None])[0]
     return f"https://www.youtube.com/watch?v={video_id}" if video_id else url
 
-# 👋 /start command
+# 👋 Start command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("👋 Send me a YouTube link and I’ll convert it to MP3!")
 
@@ -45,31 +47,34 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text("⏳ Downloading and converting to MP3...")
 
-    filename = None  # <== Declare in advance for safety
+    filename = None  # safe init
 
     try:
-        # Step 1: Set yt-dlp options for extraction
+        print(f"[DEBUG] Cookie file path: {cookie_path}")
+        print(f"[DEBUG] Cookie file exists: {os.path.exists(cookie_path)}")
+
+        # Step 1: Extract info
         extract_opts = {
             'quiet': True,
             'ffmpeg_location': FFMPEG_PATH,
-            'cookiefile': os.path.join(os.path.dirname(__file__), 'cookies.txt'),
+            'cookiefile': cookie_path
         }
 
         with yt_dlp.YoutubeDL(extract_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             video_title = info.get("title", "audio")
 
-        # Step 2: Sanitize title for filename
+        # Step 2: Clean filename
         safe_title = re.sub(r'[\\/*?:"<>|]', "", video_title)
         filename_base = safe_title
         filename = f"{filename_base}.mp3"
 
-        # Step 3: yt-dlp options for download
+        # Step 3: Download config
         ydl_opts = {
             'format': 'bestaudio/best',
             'outtmpl': filename_base,
             'ffmpeg_location': FFMPEG_PATH,
-            'cookiefile': 'cookies.txt',
+            'cookiefile': cookie_path,
             'noplaylist': True,
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
@@ -113,7 +118,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # 🚀 Start the bot
 if __name__ == '__main__':
     app = ApplicationBuilder() \
-        .token("7839632866:AAFLygFoQ-G8qiB9E6NJv72C_SXW4CcAb10") \
+        .token(os.environ["TELEGRAM_TOKEN"]) \
         .read_timeout(120) \
         .write_timeout(120) \
         .build()
