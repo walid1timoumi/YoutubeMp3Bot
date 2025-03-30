@@ -1,118 +1,111 @@
-import logging
 import os
 import re
-import traceback
+import requests
+import logging
 import shutil
+import traceback
+import subprocess
 from urllib.parse import urlparse, parse_qs
 
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, CommandHandler, filters, ContextTypes
-import yt_dlp
 
-# ✅ Automatically locate FFmpeg path
-FFMPEG_PATH = os.path.dirname(shutil.which("ffmpeg"))
-MAX_TELEGRAM_FILE_SIZE = 49 * 1024 * 1024
-cookie_path = os.path.join(os.path.dirname(__file__), 'cookies.txt')
+# ✅ Logging setup
+logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
 
-# Logging setup
-logging.basicConfig(
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
+# ✅ File size limit (Telegram max)
+MAX_TELEGRAM_FILE_SIZE = 49 * 1024 * 1024  # 49 MB
 
-def clean_youtube_url(url: str) -> str:
+# ✅ Use system ffmpeg path
+FFMPEG_PATH = shutil.which("ffmpeg")
+
+# ✅ Clean YouTube URL and get video ID
+def extract_video_id(url: str) -> str | None:
     parsed = urlparse(url)
+    if "youtu.be" in url:
+        return parsed.path[1:]
     qs = parse_qs(parsed.query)
-    video_id = qs.get("v", [None])[0]
-    return f"https://www.youtube.com/watch?v={video_id}" if video_id else url
+    return qs.get("v", [None])[0]
 
-# /start command
+# ✅ Get stream info from Piped
+def get_audio_url(video_id: str):
+    api_url = f"https://pipedapi.kavin.rocks/streams/{video_id}"
+    r = requests.get(api_url, timeout=10)
+    r.raise_for_status()
+    data = r.json()
+
+    # Use best available audio format
+    audio_streams = data.get("audioStreams", [])
+    if not audio_streams:
+        return None, None
+
+    best_audio = audio_streams[0]  # sorted best first
+    return best_audio["url"], data.get("title", "audio")
+
+# ✅ Download audio via ffmpeg
+def download_mp3(audio_url, title):
+    safe_title = re.sub(r'[\\/*?:"<>|]', "", title)
+    filename = f"{safe_title}.mp3"
+
+    result = subprocess.run([
+        FFMPEG_PATH,
+        "-y",
+        "-i", audio_url,
+        "-vn",
+        "-acodec", "libmp3lame",
+        "-b:a", "192k",
+        "-movflags", "+faststart",
+        filename
+    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    return filename if os.path.exists(filename) else None
+
+# 👋 /start command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("👋 Send me a YouTube link and I’ll convert it to MP3!")
+    await update.message.reply_text("👋 Send me a YouTube link and I’ll convert it to MP3 (proxy mode, no login required)!")
 
-# Main handler
+# 🎧 Main handler
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    raw_url = update.message.text.strip()
-    url = clean_youtube_url(raw_url)
+    url = update.message.text.strip()
+    video_id = extract_video_id(url)
 
-    if "youtube.com" not in url and "youtu.be" not in url:
-        await update.message.reply_text("❌ Please send a valid YouTube URL.")
+    if not video_id:
+        await update.message.reply_text("❌ Invalid YouTube link.")
         return
 
-    await update.message.reply_text("⏳ Downloading and converting to MP3...")
+    await update.message.reply_text("🔄 Converting to MP3...")
+
     filename = None
-
     try:
-        print(f"[DEBUG] FFmpeg path: {FFMPEG_PATH}")
-        print(f"[DEBUG] Cookie file exists: {os.path.exists(cookie_path)}")
+        audio_url, title = get_audio_url(video_id)
+        if not audio_url:
+            await update.message.reply_text("❌ No audio stream found.")
+            return
 
-        with open(cookie_path, "r") as f:
-            print("[DEBUG] Cookie preview:")
-            for _ in range(5):
-                print(f.readline().strip())
-
-        # Step 1: Get video info
-        extract_opts = {
-            'quiet': True,
-            'ffmpeg_location': FFMPEG_PATH,
-            'cookiefile': cookie_path
-        }
-
-        with yt_dlp.YoutubeDL(extract_opts) as ydl:
-            info = ydl.extract_info(url, download=False)
-            video_title = info.get("title", "audio")
-
-        # Step 2: Sanitize
-        safe_title = re.sub(r'[\\/*?:"<>|]', "", video_title)
-        filename_base = safe_title
-        filename = f"{filename_base}.mp3"
-
-        # Step 3: Download + convert
-        ydl_opts = {
-            'format': 'bestaudio/best',
-            'outtmpl': filename_base,
-            'ffmpeg_location': FFMPEG_PATH,
-            'cookiefile': cookie_path,
-            'noplaylist': True,
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': '192',
-            }],
-            'quiet': False,
-            'verbose': True
-        }
-
-        print(f"[yt-dlp] Downloading: {url}")
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([url])
-
-        if not os.path.exists(filename):
-            await update.message.reply_text("❌ Download failed.")
+        filename = download_mp3(audio_url, title)
+        if not filename:
+            await update.message.reply_text("❌ Failed to convert audio.")
             return
 
         size = os.path.getsize(filename)
-        print(f"[DEBUG] File size: {size / (1024 * 1024):.2f} MB")
-
         if size > MAX_TELEGRAM_FILE_SIZE:
-            await update.message.reply_text(f"❌ MP3 too large for Telegram ({size / 1024 / 1024:.2f} MB).")
-        else:
-            await update.message.chat.send_action(action="upload_audio")
-            with open(filename, 'rb') as audio:
-                await update.message.reply_audio(audio, title=video_title)
+            await update.message.reply_text("❌ MP3 is too large to send via Telegram.")
+            return
+
+        await update.message.chat.send_action(action="upload_audio")
+        with open(filename, 'rb') as f:
+            await update.message.reply_audio(f, title=title)
 
     except Exception as e:
-        tb = traceback.format_exc()
-        print("====== ERROR ======")
-        print(tb)
-        await update.message.reply_text(f"❌ Error:\n{e}\n\nURL: {url}")
+        print(traceback.format_exc())
+        await update.message.reply_text(f"❌ Error: {e}")
 
     finally:
         if filename and os.path.exists(filename):
             os.remove(filename)
 
-# Launch bot
-if __name__ == '__main__':
+# 🚀 Bot runner
+if __name__ == "__main__":
     app = ApplicationBuilder() \
         .token(os.environ["TELEGRAM_TOKEN"]) \
         .read_timeout(120) \
