@@ -27,9 +27,9 @@ def extract_video_id(url: str) -> str | None:
     qs = parse_qs(parsed.query)
     return qs.get("v", [None])[0]
 
-# ✅ Get stream info from Piped
+# ✅ Get stream info from Piped (updated API)
 def get_audio_url(video_id: str):
-    api_url = f"https://pipedapi.kavin.rocks/streams/{video_id}"
+    api_url = f"https://pipedapi.leptons.xyz/streams/{video_id}"
     r = requests.get(api_url, timeout=10)
     r.raise_for_status()
     data = r.json()
