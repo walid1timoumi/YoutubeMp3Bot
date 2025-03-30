@@ -29,18 +29,31 @@ def extract_video_id(url: str) -> str | None:
 
 # ✅ Get stream info from Piped (updated API)
 def get_audio_url(video_id: str):
-    api_url = f"https://pipedapi.leptons.xyz/streams/{video_id}"
-    r = requests.get(api_url, timeout=10)
-    r.raise_for_status()
-    data = r.json()
+    piped_apis = [
+        "https://pipedapi.adminforge.de",
+        "https://pipedapi.tokhmi.xyz",
+        "https://pipedapi.in.projectsegfau.lt",
+        "https://pipedapi.kavin.rocks",  # might fail
+    ]
 
-    # Use best available audio format
-    audio_streams = data.get("audioStreams", [])
-    if not audio_streams:
-        return None, None
+    for api in piped_apis:
+        try:
+            logging.info(f"[🔁] Trying Piped API: {api}")
+            r = requests.get(f"{api}/streams/{video_id}", timeout=10)
+            r.raise_for_status()
+            data = r.json()
 
-    best_audio = audio_streams[0]  # sorted best first
-    return best_audio["url"], data.get("title", "audio")
+            audio_streams = data.get("audioStreams", [])
+            if not audio_streams:
+                continue
+
+            best_audio = audio_streams[0]
+            return best_audio["url"], data.get("title", "audio")
+        except Exception as e:
+            logging.warning(f"[⚠️] Failed with {api}: {e}")
+            continue
+
+    return None, None
 
 # ✅ Download audio via ffmpeg
 def download_mp3(audio_url, title):
