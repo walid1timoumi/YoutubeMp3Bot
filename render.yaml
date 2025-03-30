@@ -1,9 +1,8 @@
-services:
-  - type: web
-    name: youtubemp3-bot
-    runtime: python
-    buildCommand: "./build.sh && pip install -r requirements.txt"
-    startCommand: "pkill -f youtubemp3 || true && python youtubemp3.py"
-    envVars:
-      - key: TELEGRAM_TOKEN
-        sync: false
+type: worker
+name: youtube-mp3-bot
+runtime: python
+buildCommand: ./build.sh
+startCommand: ./start.sh
+envVars:
+  - key: TELEGRAM_TOKEN
+    sync: false
