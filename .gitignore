@@ -8,7 +8,7 @@ __pycache__/
 
 # Ignore secret config
 .env
-config.py
+
 
 # Ignore tmp audio files
 tmp/

@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  telegram-bot:
+    build: .
+    container_name: youtube-mp3-bot
+    restart: unless-stopped
+    volumes:
+      - ./tmp:/app/tmp
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - FFMPEG_PATH=ffmpeg
