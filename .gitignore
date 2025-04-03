@@ -1,0 +1,20 @@
+# Ignore Python cache and bytecode
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignore logs and debug
+*.log
+
+# Ignore secret config
+.env
+config.py
+
+# Ignore tmp audio files
+tmp/
+
+# Ignore editor/system files
+.DS_Store
+.idea/
+.vscode/
+*.swp
