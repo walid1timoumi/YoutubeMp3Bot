@@ -1,4 +1,5 @@
 # 🎧 Youtube MP3 Telegram Bot
+![Bot Preview](preview.png)
 
 A powerful Telegram bot that downloads audio from any YouTube video and sends it back to the user as an `.mp3` file — with Docker support, clean logging, and error handling.
 
